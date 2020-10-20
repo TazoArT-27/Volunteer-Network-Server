@@ -2,7 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
-const fs = require('fs-extra')
+const fs = require('fs-extra');
+const { ObjectId } = require('mongodb');
 const MongoClient = require('mongodb').MongoClient;
 require('dotenv').config();
 
@@ -41,12 +42,29 @@ client.connect(err => {
       })
   })
   //getting volunteer info from db for events
-  app.get('/eventsWork', (req, res) => {
+  app.get('/events', (req, res) => {
     volunteerInfoCollection.find({})
         .toArray((err, documents) => {
             res.send(documents);
         })
   });
+  //canceling task
+  app.delete("/deleteTask/:id", (req, res) => {
+    console.log(req.params.id);
+    volunteerInfoCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
+        console.log(result, "Deleted ⚠️");
+        res.send(result.deletedCount > 0);
+    });
+});
+//volunteer list
+app.get("/loadVolunteerList", (req, res) => {
+    volunteerInfoCollection.find({}).toArray((err, docs) => {
+        res.send(docs);
+        console.log(docs);
+    });
+}); 
+
+
 
   //sending volunteer work to db
   app.post('/addWork',(req, res) => {
@@ -80,6 +98,14 @@ client.connect(err => {
           //return res.send({name: file.name, path: `/${file.name}`})
       })
   })
+
+  app.delete("/admin/deleteTask/:id", (req, res) => {
+    console.log(req.params.id);
+    volunteerInfoCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
+        console.log(result, "Task deleted ⚠️");
+        res.send(result.deletedCount > 0);
+    });
+});
 
   //getting new added works from db
   app.get('/works', (req, res) => {
